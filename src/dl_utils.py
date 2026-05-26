@@ -229,7 +229,7 @@ class ActionCNN(nn.Module):
         Spatial input dimension (frames are assumed square). Default 84.
     """
 
-    def __init__(self, in_channels: int, num_classes: int, img_size: int = 84):
+    def __init__(self, in_channels: int, num_classes: int, img_size: int = 84, dropout: float = 0.5):
         super().__init__()
         self.features = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=8, stride=4),
@@ -245,6 +245,7 @@ class ActionCNN(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(flat_size, 512),
             nn.ReLU(),
+            nn.Dropout(p=dropout),
             nn.Linear(512, num_classes),
         )
 

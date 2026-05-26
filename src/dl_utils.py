@@ -149,14 +149,15 @@ class GameFrameDataset(Dataset):
     """
 
     def __init__(self, frames: np.ndarray, labels: np.ndarray):
-        self.frames = torch.from_numpy(frames).unsqueeze(1).float() / 255.0
+        self.frames = frames  # kept as uint8; conversion deferred to __getitem__
         self.labels = torch.from_numpy(labels.astype(np.int64))
 
     def __len__(self) -> int:
         return len(self.labels)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.frames[idx], self.labels[idx]
+        frame = torch.from_numpy(self.frames[idx]).unsqueeze(0).float() / 255.0
+        return frame, self.labels[idx]
 
 
 class SessionAwareStackedDataset(Dataset):
@@ -184,7 +185,7 @@ class SessionAwareStackedDataset(Dataset):
         session_lengths: list[int],
         stack_size: int = 4,
     ):
-        self.frames = torch.from_numpy(frames).float() / 255.0
+        self.frames = frames  # kept as uint8; conversion deferred to __getitem__
         self.labels = torch.from_numpy(labels.astype(np.int64))
         self.k = stack_size
 
@@ -202,7 +203,7 @@ class SessionAwareStackedDataset(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         start = int(self.valid_indices[idx])
-        stack = self.frames[start: start + self.k]   # (k, H, W)
+        stack = torch.from_numpy(self.frames[start: start + self.k]).float() / 255.0  # (k, H, W)
         label = self.labels[start + self.k - 1]
         return stack, label
 

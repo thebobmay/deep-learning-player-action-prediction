@@ -2,7 +2,7 @@
 
 **Dataset:** Atari-HEAD: Atari Human Eye-Tracking and Demonstration Dataset
 
-**Source:** Zhang, R., Walshe, C., Liu, Z., Guan, L., Muller, K., Whritner, J., Zhang, L., Hayhoe, M., & Ballard, D. (2020). Atari-HEAD: Atari human eye-tracking and demonstration dataset. *Proceedings of the AAAI Conference on Artificial Intelligence, 34*(2), 6811-6820. https://doi.org/10.1609/aaai.v34i04.6161
+**Source:** Zhang, R., Walshe, C., Liu, Z., Guan, L., Muller, K., Whritner, J., Zhang, L., Hayhoe, M., & Ballard, D. (2020). Atari-HEAD: Atari human eye-tracking and demonstration dataset. *Proceedings of the AAAI Conference on Artificial Intelligence, 34*(04), 6811–6820. https://doi.org/10.1609/aaai.v34i04.6161
 
 **Data DOI:** https://doi.org/10.5281/zenodo.3451402
 
@@ -38,7 +38,7 @@ Each session inside the zip contains:
 |---|---|---|
 | Standard | 20 | ~330,000 |
 | Highscore (expert play) | 7 | ~117,000 |
-| **Total** | **27** | **447,327** |
+| **Total** | **27** | **447,300** |
 
 ---
 

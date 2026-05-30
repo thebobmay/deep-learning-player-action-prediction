@@ -1,6 +1,6 @@
 # Deep Learning for Player Action Prediction from Atari Gameplay Frames
 
-Udacity AI Masters Capstone - Project 4: Deep Learning Systems
+Udacity AI Masters Capstone - Deep Learning Systems
 
 **Student:** Robert Mayfield
 
@@ -8,7 +8,7 @@ Udacity AI Masters Capstone - Project 4: Deep Learning Systems
 
 ## Project Description
 
-This project builds a PyTorch deep learning experiment that predicts player actions from Atari Montezuma's Revenge gameplay frames. The analysis trains a CNN on real human gameplay recordings and compares a single-frame baseline against a four-frame stacked experimental model to test whether temporal context improves action prediction. Montezuma's Revenge is a side-scrolling platformer involving jumping, ladder climbing, and hazard avoidance, making it directly relevant to the AI Game Director Studio's focus on platformer behavior modeling.
+This project builds a PyTorch deep learning experiment that predicts player actions from Atari Montezuma's Revenge gameplay frames. The analysis trains a CNN on real human gameplay recordings and compares a single frame baseline against a four frame stacked experimental model to test whether temporal context improves action prediction. Montezuma's Revenge is a side-scrolling platformer involving jumping, ladder climbing, and hazard avoidance, making it directly relevant to the AI Game Director Studio's focus on platformer behavior modeling.
 
 ---
 
@@ -18,7 +18,7 @@ This project builds a PyTorch deep learning experiment that predicts player acti
 **Source:** Zhang et al. (2020). AAAI Conference on Artificial Intelligence.
 **License:** CC BY 4.0
 **Sessions:** 27 (20 standard, 7 highscore expert sessions)
-**Total frames:** 447,327
+**Total frames:** 447,300
 **Action classes:** 5 (NOOP, RIGHT, LEFT, UP, DOWN)
 
 See `dataset_access_instructions.md` for full download instructions.
@@ -34,7 +34,7 @@ reports/module_summary.pdf                          identical copy of report
 environment.yml                                     conda environment (authoritative GPU spec)
 requirements.txt                                    pip package dependencies
 dataset_access_instructions.md                      dataset source and download steps
-data/sample/                                        small sample for quick review
+data/sample/                                        reserved for sample frames
 outputs/figures/                                    saved chart files
 outputs/tables/                                     dl_metrics.csv and other tables
 outputs/model_artifacts/                            saved PyTorch model weights
@@ -45,32 +45,18 @@ outputs/model_artifacts/                            saved PyTorch model weights
 ## How to Run
 
 1. Create the conda environment from `environment.yml`:
-   ```
+  ```
    conda env create -f environment.yml
-   ```
+  ```
    Or clone the existing GPU environment:
-   ```
-   conda create --name deep-learning-player-action-prediction --clone torch-gpu
-   ```
-
 2. Activate the environment:
-
-   On Windows:
-   ```
-   conda activate deep-learning-player-action-prediction
-   ```
+  On Windows:
    On macOS or Linux:
-   ```
-   conda activate deep-learning-player-action-prediction
-   ```
-
 3. Download the dataset from Zenodo (see `dataset_access_instructions.md`) and place `montezuma_revenge.zip` into `data/raw/`. The notebook reads frames directly from the zip archive.
-
 4. Open the notebook in Jupyter:
-   ```
+  ```
    jupyter notebook notebooks/deep_learning.ipynb
-   ```
-
+  ```
 5. Run all cells from top to bottom.
 
 **Note:** GPU execution is recommended. The notebook detects CUDA automatically and falls back to CPU if unavailable. Training both models on a modern GPU takes approximately 30 to 60 minutes.

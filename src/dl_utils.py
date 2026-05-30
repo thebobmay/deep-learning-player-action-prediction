@@ -140,7 +140,7 @@ def load_all_sessions(
 # ---------------------------------------------------------------------------
 
 class GameFrameDataset(Dataset):
-    """Single-frame dataset for baseline action prediction.
+    """Single frame dataset for baseline action prediction.
 
     Parameters
     ----------
@@ -161,7 +161,7 @@ class GameFrameDataset(Dataset):
 
 
 class SessionAwareStackedDataset(Dataset):
-    """Four-frame stacked dataset that respects session boundaries.
+    """Four frame stacked dataset that respects session boundaries.
 
     Consecutive frames are stacked along the channel dimension to provide
     temporal context. Stacks are never built across session boundaries,

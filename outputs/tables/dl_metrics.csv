@@ -1,8 +1,7 @@
-class,baseline_precision,baseline_recall,baseline_f1,stacked_precision,stacked_recall,stacked_f1
-NOOP,0.9075,0.8575,0.8818,0.9331,0.8705,0.9007
-RIGHT,0.8762,0.8443,0.8599,0.9039,0.9227,0.9132
-LEFT,0.8626,0.8825,0.8725,0.9251,0.9251,0.9251
-UP,0.8587,0.9217,0.8891,0.894,0.9527,0.9224
-DOWN,0.827,0.9211,0.8715,0.8955,0.9601,0.9267
-accuracy,0.8733,,,0.9154,,
-macro_f1,0.875,,,0.9176,,
+class,baseline_precision,baseline_recall,baseline_f1,stacked_precision,stacked_recall,stacked_f1,baseline_accuracy,baseline_macro_f1,stacked_accuracy,stacked_macro_f1
+NOOP,0.9013,0.8538,0.8769,0.922,0.8747,0.8977,,,,
+RIGHT,0.8409,0.8729,0.8566,0.9099,0.9015,0.9057,,,,
+LEFT,0.8898,0.8436,0.8661,0.9118,0.9139,0.9129,,,,
+UP,0.8045,0.9294,0.8625,0.8544,0.9399,0.8951,,,,
+DOWN,0.8569,0.8985,0.8772,0.8808,0.9407,0.9097,,,,
+OVERALL,,,,,,,0.8674,0.8679,0.9049,0.9042

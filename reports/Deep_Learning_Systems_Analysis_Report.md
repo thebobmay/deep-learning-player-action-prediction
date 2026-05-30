@@ -40,7 +40,17 @@ Both the baseline and experimental models use the same ActionCNN architecture, d
 
 At 84x84 input, the three convolutional layers reduce spatial dimensions to a 7x7x64 feature map, which flattens to 3,136 features before the classification head. The flat feature size is computed dynamically, making the class portable to other input resolutions. The baseline model (in_channels=1) has 1,680,549 parameters. The experimental model (in_channels=4) has 1,686,693 parameters.
 
-The DQN architecture was chosen because it was designed specifically for Atari frame input and is the established benchmark in the Atari deep learning literature. Its translation invariant convolutional filters are well suited to detecting local spatial features such as ball position, ladder edges, and character posture at this resolution.
+### Architectures Considered
+
+Three architecture families were evaluated before selecting the DQN CNN.
+
+**Recurrent Neural Network (LSTM).** An LSTM processes frames sequentially and maintains hidden state across timesteps, which in principle enables long range temporal dependencies. This was rejected for two reasons. First, the temporal context needed for this task is short: four consecutive frames are sufficient to encode ball trajectory or character motion direction. Frame stacking handles this more efficiently than a recurrent component and adds no training complexity. Second, an LSTM applied frame by frame introduces sequential dependencies that complicate batching and slow training relative to a fully parallel CNN.
+
+**Vision Transformer (ViT).** A ViT applies self attention across patches of the input frame, enabling global context across the full image. This was rejected because ViTs trained from scratch require ImageNet-scale data to match CNN performance; Dosovitskiy et al. (2020) recommend large scale pretraining for ViT on smaller downstream tasks, and 447,300 frames is insufficient to realize its advantage. In addition, global self attention across all patch pairs is a computationally expensive solution to a local pattern detection problem that CNNs handle efficiently through translation invariant filters. Using the DQN CNN also keeps results directly comparable to the Atari deep learning literature.
+
+**Pretrained CNN (ResNet).** A ResNet pretrained on ImageNet could provide strong feature extraction without training from scratch. This was rejected because ImageNet pretrained weights encode statistical properties of natural photographs (texture, color, object scale) that do not transfer to 84x84 grayscale Atari game frames, which have distinct visual statistics: flat color regions, hard edges, sprite based geometry, and no photographic texture. Fine tuning a pretrained ResNet on this domain would require significant adaptation and introduces more variables than training the DQN architecture from scratch.
+
+**Selected architecture: DQN 3-conv CNN.** The DQN architecture was designed specifically for 84x84 Atari frame input and is the established benchmark in the Atari deep learning literature (Mnih et al., 2015). Its translation invariant convolutional filters are well suited to detecting local spatial features such as character position, ladder edges, and platform geometry. The 7x7x64 feature map produced at 84x84 input is a well validated design point, and the approximately 1.68 million parameter count is appropriately sized for 447,300 training frames: expressive enough to learn meaningful action predictors without being overparameterized for the dataset scale.
 
 ### Input Representation
 
@@ -89,49 +99,49 @@ The controlled comparison tests one hypothesis: does four frame temporal context
 ### Model Comparison
 
 
-| Metric   | Baseline (1-frame) | NOOP Boosted (1-frame) | Stacked (4-frame) |
+| Metric   | Baseline (1-frame) | NOOP-Boosted (1-frame) | Stacked (4-frame) |
 | -------- | ------------------ | ---------------------- | ----------------- |
-| Accuracy | 87.3%              | 87.2%                  | 91.5%             |
-| Macro F1 | 87.5%              | 87.5%                  | 91.8%             |
+| Accuracy | 86.7%              | 87.6%                  | 90.5%             |
+| Macro F1 | 86.8%              | 87.7%                  | 90.4%             |
 
 
-### Per Class F1 (Stacked Model)
+### Per-Class F1 (Stacked Model)
 
 
 | Class | Precision | Recall | F1    |
 | ----- | --------- | ------ | ----- |
-| NOOP  | 0.933     | 0.871  | 0.901 |
-| RIGHT | 0.904     | 0.923  | 0.913 |
-| LEFT  | 0.925     | 0.925  | 0.925 |
-| UP    | 0.894     | 0.953  | 0.922 |
-| DOWN  | 0.896     | 0.960  | 0.927 |
+| NOOP  | 0.922     | 0.875  | 0.898 |
+| RIGHT | 0.910     | 0.902  | 0.906 |
+| LEFT  | 0.912     | 0.914  | 0.913 |
+| UP    | 0.854     | 0.940  | 0.895 |
+| DOWN  | 0.881     | 0.941  | 0.910 |
 
 
 ### Interpretation
 
-The four frame stacked model outperforms the single frame baseline by 4.2 percentage points on accuracy and 4.3 percentage points on macro F1. The near identical accuracy and macro F1 scores for both models confirm that the class distribution is balanced enough that neither metric is misleading on its own.
+The four frame stacked model outperforms the single frame baseline by 3.8 percentage points on accuracy (90.5% vs 86.7%) and 3.6 percentage points on macro F1 (90.4% vs 86.8%). The near-identical accuracy and macro F1 scores for both models confirm that the class distribution is balanced enough that neither metric is misleading on its own.
 
-The improvement is consistent across all five action classes. The largest gains are on the vertical actions: UP recall improved from 0.92 to 0.95 and DOWN recall from 0.92 to 0.96. This directly supports the hypothesis that temporal context helps most for motion dependent actions. A single static frame cannot distinguish a player who is currently climbing a ladder from one who is standing next to it; four consecutive frames encode the directional trajectory that resolves the ambiguity. RIGHT showed the largest F1 improvement (+5.3pp), reflecting the same principle: horizontal direction of travel is encoded in motion rather than any single frame.
+The improvement is consistent across all five action classes. UP recall improved from 0.93 to 0.94 and DOWN recall from 0.90 to 0.94. This supports the hypothesis that temporal context helps most for motion-dependent actions. A single static frame cannot distinguish a player who is currently climbing a ladder from one who is standing next to it; four consecutive frames encode the directional trajectory that resolves the ambiguity. RIGHT showed the largest F1 improvement (+4.9pp), reflecting the same principle: horizontal direction of travel is encoded in motion rather than any single frame.
 
-The NOOP boosted experiment produced exactly the precision-recall tradeoff expected: NOOP recall improved from 0.857 to 0.901 (+4.3pp) while NOOP precision fell from 0.908 to 0.860 (-4.8pp). The net effect on NOOP F1 was negligible (-0.2pp) and overall accuracy and macro F1 were essentially unchanged. Boosting the class weight moved the model along the precision-recall curve but did not escape it. This empirically confirms that flat five class classification creates a structural tension between NOOP and the directional classes that cannot be resolved through weight adjustment alone.
+The NOOP-boosted experiment produced genuine improvements: NOOP recall improved from 0.854 to 0.890 (+3.6pp) with NOOP F1 rising +1.1pp, and overall macro F1 improved by +1.0pp. However, comparing against the stacked model shows the fundamental difference between the two approaches. The stacked model outperforms the NOOP-boosted baseline by 2.9pp on accuracy and 2.7pp on macro F1. Weight adjustment helps by penalizing NOOP misses more during training, but it cannot provide the model with information it does not have: temporal context from consecutive frames is a more effective solution than weight adjustment for distinguishing idle frames from directional movement.
 
-### Non Technical Summary
+### Non-Technical Summary
 
-The model learns to watch Atari gameplay and predict what button the player is pressing. When the model sees only a single screenshot, it achieves about 87% accuracy: it knows roughly what the player is doing, but it cannot tell which direction they are moving from a frozen image. When the model sees four screenshots in sequence, accuracy rises to about 92%. The improvement is largest for up and down movements, which require recognizing that the player is actively traversing a ladder or rope rather than simply standing near one. The gap between one frame and four frame input is the gap between reading a photograph and watching a short video clip.
+The model learns to watch Atari gameplay and predict what button the player is pressing. When the model sees only a single screenshot, it achieves about 87% accuracy: it knows roughly what the player is doing, but it cannot tell which direction they are moving from a frozen image. When the model sees four screenshots in sequence, accuracy rises to about 90%. Increasing the importance of idle frame detection through class weight adjustment also helped — pushing accuracy to about 88% — but temporal context from four frames produced the larger and more consistent gain across all action types. The gap between one frame and four frame input is the gap between reading a photograph and watching a short video clip.
 
 ---
 
 ## Error Analysis
 
-The stacked model misclassifies 8.5% of test frames (5,649 of 66,739), compared to the baseline's 12.7% error rate. The confusion patterns are highly structured.
+The stacked model misclassifies 9.5% of test frames (6,347 of 66,739), compared to the baseline's 13.3% error rate. The confusion patterns are highly structured.
 
-NOOP is the single largest source of remaining errors. NOOP predicted as RIGHT and NOOP predicted as LEFT are the top two confusion pairs, together accounting for roughly 32.5% of all errors. An idle player standing in a neutral pose near a platform edge produces frames that can resemble the early frames of a horizontal movement, and even four consecutive stationary frames can look like the startup phase of directional movement.
+NOOP is the single largest source of remaining errors. NOOP predicted as LEFT and NOOP predicted as RIGHT are the top two confusion pairs, together accounting for roughly 27.6% of all errors. An idle player standing in a neutral pose near a platform edge produces frames that can resemble the early frames of a horizontal movement, and even four consecutive stationary frames can look like the startup phase of directional movement.
 
-RIGHT to LEFT confusion, the dominant error mode in the baseline, is substantially reduced in the stacked model. Four consecutive frames encode direction of travel, resolving most of the ambiguity a static snapshot cannot. Cases that remain are likely mid reversal frames where the player stops one direction and begins another within the four frame window.
+LEFT-RIGHT confusion, the dominant error mode in the baseline where LEFT predicted as RIGHT was the single largest confusion pair (1,528 cases), is substantially reduced in the stacked model (523 cases). Four consecutive frames encode direction of travel, resolving most of the ambiguity a static snapshot cannot. Cases that remain are likely mid-reversal frames where the player stops one direction and begins another within the four frame window.
 
-UP and DOWN errors are rare and do not appear among the top confusion pairs, consistent with recall scores of 0.95 and 0.96. Ladder traversal involves distinctive postures and positions that are visually separable even at 84x84 resolution.
+UP and DOWN errors do not appear among the top confusion pairs, consistent with recall scores of 0.94 each. Ladder traversal involves distinctive postures and positions that are visually separable even at 84x84 resolution.
 
-The remaining errors in the stacked model are concentrated at the NOOP vs action boundary rather than among directional distinctions. A hierarchical cascade architecture (Stage 1: binary idle vs. active; Stage 2: four class directional) would target this specific failure pattern by giving each stage a simpler and better defined decision boundary.
+The remaining errors in the stacked model are concentrated at the NOOP vs. action boundary rather than among directional distinctions. A hierarchical cascade architecture (Stage 1: binary idle vs. active; Stage 2: four class directional) would target this specific failure pattern by giving each stage a simpler and better-defined decision boundary.
 
 ---
 
@@ -183,14 +193,16 @@ The model's practical integration constraints should be acknowledged. It was tra
 
 ## References
 
-Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press. https://www.deeplearningbook.org
+Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S., Uszkoreit, J., & Houlsby, N. (2021). An image is worth 16x16 words: Transformers for image recognition at scale. *Proceedings of the International Conference on Learning Representations (ICLR)*. [https://arxiv.org/abs/2010.11929](https://arxiv.org/abs/2010.11929)
 
-He, H., & Garcia, E. A. (2009). Learning from imbalanced data. *IEEE Transactions on Knowledge and Data Engineering*, 21(9), 1263–1284. https://doi.org/10.1109/TKDE.2008.239
+Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press. [https://www.deeplearningbook.org](https://www.deeplearningbook.org)
 
-Kingma, D. P., & Ba, J. (2015). Adam: A method for stochastic optimization. *Proceedings of the International Conference on Learning Representations (ICLR)*. https://arxiv.org/abs/1412.6980
+He, H., & Garcia, E. A. (2009). Learning from imbalanced data. *IEEE Transactions on Knowledge and Data Engineering*, 21(9), 1263–1284. [https://doi.org/10.1109/TKDE.2008.239](https://doi.org/10.1109/TKDE.2008.239)
 
-Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., Graves, A., Riedmiller, M., Fidjeland, A. K., Ostrovski, G., Petersen, S., Beattie, C., Sadik, A., Antonoglou, I., King, H., Kumaran, D., Wierstra, D., Legg, S., & Hassabis, D. (2015). Human-level control through deep reinforcement learning. *Nature*, 518(7540), 529–533. https://doi.org/10.1038/nature14236
+Kingma, D. P., & Ba, J. (2015). Adam: A method for stochastic optimization. *Proceedings of the International Conference on Learning Representations (ICLR)*. [https://arxiv.org/abs/1412.6980](https://arxiv.org/abs/1412.6980)
 
-Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., & Salakhutdinov, R. (2014). Dropout: A simple way to prevent neural networks from overfitting. *Journal of Machine Learning Research*, 15(1), 1929–1958. https://jmlr.org/papers/v15/srivastava14a.html
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., Graves, A., Riedmiller, M., Fidjeland, A. K., Ostrovski, G., Petersen, S., Beattie, C., Sadik, A., Antonoglou, I., King, H., Kumaran, D., Wierstra, D., Legg, S., & Hassabis, D. (2015). Human-level control through deep reinforcement learning. *Nature*, 518(7540), 529–533. [https://doi.org/10.1038/nature14236](https://doi.org/10.1038/nature14236)
 
-Zhang, R., Walshe, C., Liu, Z., Guan, L., Muller, K., Whritner, J., Zhang, L., Hayhoe, M., & Ballard, D. (2020). Atari-HEAD: Atari human eye-tracking and demonstration dataset. *Proceedings of the AAAI Conference on Artificial Intelligence*, 34(04), 6811–6820. https://doi.org/10.1609/aaai.v34i04.6161
+Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., & Salakhutdinov, R. (2014). Dropout: A simple way to prevent neural networks from overfitting. *Journal of Machine Learning Research*, 15(1), 1929–1958. [https://jmlr.org/papers/v15/srivastava14a.html](https://jmlr.org/papers/v15/srivastava14a.html)
+
+Zhang, R., Walshe, C., Liu, Z., Guan, L., Muller, K., Whritner, J., Zhang, L., Hayhoe, M., & Ballard, D. (2020). Atari-HEAD: Atari human eye-tracking and demonstration dataset. *Proceedings of the AAAI Conference on Artificial Intelligence*, 34(04), 6811–6820. [https://doi.org/10.1609/aaai.v34i04.6161](https://doi.org/10.1609/aaai.v34i04.6161)

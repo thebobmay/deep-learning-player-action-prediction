@@ -1,4 +1,4 @@
-name: torch-gpu
+name: deep-learning-capstone
 channels:
   - defaults
   - conda-forge
@@ -257,14 +257,11 @@ dependencies:
   - zstd=1.5.7=h56299aa_0
   - pip:
       - filelock==3.25.2
-      - lightning-utilities==0.15.3
       - mpmath==1.3.0
       - networkx==3.6.1
       - pillow==12.1.1
       - sympy==1.13.1
       - torch==2.6.0+cu124
-      - torch-fidelity==0.4.0
       - torchaudio==2.6.0+cu124
-      - torchmetrics==1.9.0
       - torchvision==0.21.0+cu124
-prefix: C:\Users\bjm20\anaconda3\envs\torch-gpu
+prefix: C:\Users\bjm20\anaconda3\envs\deep-learning-capstone

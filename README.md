@@ -45,18 +45,18 @@ outputs/model_artifacts/                            saved PyTorch model weights
 ## How to Run
 
 1. Create the conda environment from `environment.yml`:
-  ```
+   ```
    conda env create -f environment.yml
-  ```
-   Or clone the existing GPU environment:
+   ```
 2. Activate the environment:
-  On Windows:
-   On macOS or Linux:
+   ```
+   conda activate deep-learning-capstone
+   ```
 3. Download the dataset from Zenodo (see `dataset_access_instructions.md`) and place `montezuma_revenge.zip` into `data/raw/`. The notebook reads frames directly from the zip archive.
 4. Open the notebook in Jupyter:
-  ```
+   ```
    jupyter notebook notebooks/deep_learning.ipynb
-  ```
+   ```
 5. Run all cells from top to bottom.
 
 **Note:** GPU execution is recommended. The notebook detects CUDA automatically and falls back to CPU if unavailable. Training both models on a modern GPU takes approximately 30 to 60 minutes.
@@ -91,3 +91,5 @@ See `environment.yml` for the full conda environment including CUDA dependencies
 See `requirements.txt` for pip package dependencies.
 
 Key libraries: Python 3.x, PyTorch 2.6.0 (CUDA 12.4), NumPy, Pillow, scikit-learn, matplotlib, seaborn, tqdm, Jupyter
+
+**Note on requirements.txt format:** This file was generated with `pip freeze` from a conda environment. Many entries use the `package @ file:///...` format, which is standard output for conda-managed packages when captured via pip. The critical packages (torch, numpy, scikit-learn, matplotlib, etc.) include version numbers. To reproduce the environment, use `conda env create -f environment.yml` rather than `pip install -r requirements.txt`.

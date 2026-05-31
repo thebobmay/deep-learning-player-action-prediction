@@ -9,7 +9,7 @@
 
 ## Report Overview
 
-This report describes a deep learning experiment that trains convolutional neural networks to predict player actions from Atari Montezuma's Revenge gameplay frames. The central research question is whether providing a model with four consecutive frames of temporal context improves action prediction over a single static frame. Two models are compared under a controlled experimental design in which exactly one variable changes: the input representation. A third experiment using a boosted class weight is also described and analyzed. The report covers the dataset, model architecture and design decisions, training methodology, evaluation results, limitations, and responsible use considerations.
+This report describes a deep learning experiment that trains convolutional neural networks to predict player actions from Atari Montezuma's Revenge gameplay frames. The central research question is whether providing a model with four consecutive frames of temporal context improves action prediction over a single static frame. Two models are compared under a controlled experimental design in which exactly one variable changes: the input representation. A third experiment using a boosted class weight is also described and analyzed. The report covers the dataset, model architecture and design decisions, training methodology, evaluation results, limitations, and responsible use considerations. This task is an instance of behavioral cloning (Pomerleau, 1989), in which a supervised model learns to map observations to actions directly from recorded human demonstration data.
 
 ---
 
@@ -44,13 +44,13 @@ At 84x84 input, the three convolutional layers reduce spatial dimensions to a 7x
 
 Three architecture families were evaluated before selecting the DQN CNN.
 
-**Recurrent Neural Network (LSTM).** An LSTM processes frames sequentially and maintains hidden state across timesteps, which in principle enables long range temporal dependencies. This was rejected for two reasons. First, the temporal context needed for this task is short: four consecutive frames are sufficient to encode ball trajectory or character motion direction. Frame stacking handles this more efficiently than a recurrent component and adds no training complexity. Second, an LSTM applied frame by frame introduces sequential dependencies that complicate batching and slow training relative to a fully parallel CNN.
+**Recurrent Neural Network (LSTM).** An LSTM processes frames sequentially and maintains hidden state across timesteps, enabling long range temporal dependencies (Goodfellow et al., 2016, chap. 10). This was rejected for two reasons. First, the temporal context needed for this task is short: four consecutive frames are sufficient to encode ball trajectory or character motion direction. Frame stacking handles this more efficiently than a recurrent component and adds no training complexity. Second, an LSTM applied frame by frame introduces sequential dependencies that complicate batching and slow training relative to a fully parallel CNN.
 
 **Vision Transformer (ViT).** A ViT applies self attention across patches of the input frame, enabling global context across the full image. This was rejected because ViTs trained from scratch require ImageNet-scale data to match CNN performance; Dosovitskiy et al. (2021) recommend large scale pretraining for ViT on smaller downstream tasks, and 447,300 frames is insufficient to realize its advantage. In addition, global self attention across all patch pairs is a computationally expensive solution to a local pattern detection problem that CNNs handle efficiently through translation invariant filters. Using the DQN CNN also keeps results directly comparable to the Atari deep learning literature.
 
 **Pretrained CNN (ResNet).** A ResNet pretrained on ImageNet could provide strong feature extraction without training from scratch. This was rejected because ImageNet pretrained weights encode statistical properties of natural photographs (texture, color, object scale) that do not transfer to 84x84 grayscale Atari game frames, which have distinct visual statistics: flat color regions, hard edges, sprite based geometry, and no photographic texture. Fine tuning a pretrained ResNet on this domain would require significant adaptation and introduces more variables than training the DQN architecture from scratch.
 
-**Selected architecture: DQN 3-conv CNN.** The DQN architecture was designed specifically for 84x84 Atari frame input and is the established benchmark in the Atari deep learning literature (Mnih et al., 2015). Its translation invariant convolutional filters are well suited to detecting local spatial features such as character position, ladder edges, and platform geometry. The 7x7x64 feature map produced at 84x84 input is a well validated design point, and the approximately 1.68 million parameter count is appropriately sized for 447,300 training frames: expressive enough to learn meaningful action predictors without being overparameterized for the dataset scale.
+**Selected architecture: DQN 3-conv CNN.** The DQN architecture was designed specifically for 84x84 Atari frame input and is the established benchmark in the Atari deep learning literature (Mnih et al., 2015). Its translation invariant convolutional filters (Goodfellow et al., 2016) are well suited to detecting local spatial features such as character position, ladder edges, and platform geometry. The 7x7x64 feature map produced at 84x84 input is a well validated design point, and the approximately 1.68 million parameter count is appropriately sized for 447,300 training frames: expressive enough to learn meaningful action predictors without being overparameterized for the dataset scale.
 
 ### Input Representation
 
@@ -137,11 +137,11 @@ The stacked model misclassifies 9.5% of test frames (6,347 of 66,739), compared 
 
 NOOP is the single largest source of remaining errors. NOOP predicted as LEFT and NOOP predicted as RIGHT are the top two confusion pairs, together accounting for roughly 27.6% of all errors. An idle player standing in a neutral pose near a platform edge produces frames that can resemble the early frames of a horizontal movement, and even four consecutive stationary frames can look like the startup phase of directional movement.
 
-LEFT-RIGHT confusion, the dominant error mode in the baseline where LEFT predicted as RIGHT was the single largest confusion pair (1,528 cases), is substantially reduced in the stacked model (523 cases). Four consecutive frames encode direction of travel, resolving most of the ambiguity a static snapshot cannot. Cases that remain are likely mid-reversal frames where the player stops one direction and begins another within the four frame window.
+LEFT-RIGHT confusion, the dominant error mode in the baseline where LEFT predicted as RIGHT was the single largest confusion pair (1,528 cases), is substantially reduced in the stacked model (523 cases). Four consecutive frames encode direction of travel, resolving most of the ambiguity a static snapshot cannot. Cases that remain are likely mid reversal frames where the player stops one direction and begins another within the four frame window.
 
 UP and DOWN errors do not appear among the top confusion pairs, consistent with recall scores of 0.94 each. Ladder traversal involves distinctive postures and positions that are visually separable even at 84x84 resolution.
 
-The remaining errors in the stacked model are concentrated at the NOOP vs. action boundary rather than among directional distinctions. A hierarchical cascade architecture (Stage 1: binary idle vs. active; Stage 2: four class directional) would target this specific failure pattern by giving each stage a simpler and better-defined decision boundary.
+The remaining errors in the stacked model are concentrated at the NOOP vs. action boundary rather than among directional distinctions. A hierarchical cascade architecture (Stage 1: binary idle vs. active; Stage 2: four class directional) would target this specific failure pattern by giving each stage a simpler and better defined decision boundary.
 
 ---
 
@@ -151,11 +151,11 @@ The remaining errors in the stacked model are concentrated at the NOOP vs. actio
 
 **Static session split.** The 19/4/4 session split was generated with a fixed random seed. Different random seeds could produce different splits, and performance may vary across splits. No cross validation was performed due to training time constraints.
 
-**Short temporal window.** Four consecutive frames encode motion over a brief window at approximately 60fps (roughly 67ms). Longer behavioral sequences such as planning a route across multiple rooms, responding to enemy positions, or recovering from a fall are not captured by the four frame window. An LSTM applied on top of CNN features could address longer range dependencies.
+**Short temporal window.** Four consecutive frames encode motion over a brief window at approximately 60fps (roughly 67ms). Longer behavioral sequences such as planning a route across multiple rooms, responding to enemy positions, or recovering from a fall are not captured by the four frame window. An LSTM applied on top of CNN features could address longer range dependencies (Goodfellow et al., 2016, chap. 10; Oh et al., 2015).
 
 **Resolution and information loss.** Resizing frames from 160x210 to 84x84 discards fine grained spatial detail. Some visual cues such as enemy facial direction or subtle platform edge geometry may be lost at this resolution.
 
-**Temporal label alignment.** The Atari-HEAD label file records the action pressed at the time each frame was captured. There may be a small reaction time offset between the player's visual perception and their button input, introducing label noise into the training data.
+**Data collection methodology dependency.** Atari-HEAD uses a semi frame by frame collection mode in which the game pauses until the player provides input, eliminating the reaction time offset present in standard continuous gameplay recordings (Zhang et al., 2020). This approach produces clean label alignment but is not compatible with live uncontrolled gameplay. Any future data collection for a new game title, whether for fine tuning or retraining, would need to replicate this controlled methodology. This adds significant infrastructure overhead and precluding the use of existing uncontrolled gameplay recordings or telemetry streams as training data.
 
 ---
 
@@ -177,7 +177,7 @@ The remaining errors in the stacked model are concentrated at the NOOP vs. actio
 
 **Multi subject generalization.** Training on gameplay from multiple players and evaluating cross player transfer would substantially increase the practical applicability of the approach. The Atari-HEAD dataset includes data from multiple subjects across other games; a multi subject extension using the same Montezuma's Revenge game would be a natural next step.
 
-**Longer temporal context.** An LSTM or temporal attention module applied on top of the CNN feature extractor could capture behavioral sequences spanning more than four frames, enabling prediction of higher level intent such as navigating toward a key or retreating from an enemy.
+**Longer temporal context.** An LSTM or temporal attention module applied on top of the CNN feature extractor could capture behavioral sequences spanning more than four frames, enabling prediction of higher-level intent such as navigating toward a key or retreating from an enemy (Oh et al., 2015).
 
 **Larger input resolution.** Training at 160x210 (original ALE resolution) or with a ResNet feature extractor pretrained on natural images could improve spatial feature quality, particularly for distinguishing subtle enemy or object positions.
 
@@ -195,13 +195,19 @@ The model's practical integration constraints should be acknowledged. It was tra
 
 Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S., Uszkoreit, J., & Houlsby, N. (2021). An image is worth 16x16 words: Transformers for image recognition at scale. *Proceedings of the International Conference on Learning Representations (ICLR)*. [https://arxiv.org/abs/2010.11929](https://arxiv.org/abs/2010.11929)
 
-Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press. [https://www.deeplearningbook.org](https://www.deeplearningbook.org)
+Goodfellow, I., Bengio, Y., & Courville, A. (2016). Convolutional networks. In *Deep Learning* (chap. 9). MIT Press. https://www.deeplearningbook.org/contents/convnets.html
+
+Goodfellow, I., Bengio, Y., & Courville, A. (2016). Sequence modeling: Recurrent and recursive nets. In *Deep Learning* (chap. 10). MIT Press. https://www.deeplearningbook.org/contents/rnn.html
 
 He, H., & Garcia, E. A. (2009). Learning from imbalanced data. *IEEE Transactions on Knowledge and Data Engineering*, 21(9), 1263–1284. [https://doi.org/10.1109/TKDE.2008.239](https://doi.org/10.1109/TKDE.2008.239)
 
 Kingma, D. P., & Ba, J. (2015). Adam: A method for stochastic optimization. *Proceedings of the International Conference on Learning Representations (ICLR)*. [https://arxiv.org/abs/1412.6980](https://arxiv.org/abs/1412.6980)
 
-Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., Graves, A., Riedmiller, M., Fidjeland, A. K., Ostrovski, G., Petersen, S., Beattie, C., Sadik, A., Antonoglou, I., King, H., Kumaran, D., Wierstra, D., Legg, S., & Hassabis, D. (2015). Human-level control through deep reinforcement learning. *Nature*, 518(7540), 529–533. [https://doi.org/10.1038/nature14236](https://doi.org/10.1038/nature14236)
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., Graves, A., Riedmiller, M., Fidjeland, A. K., Ostrovski, G., Petersen, S., Beattie, C., Sadik, A., Antonoglou, I., King, H., Kumaran, D., Wierstra, D., Legg, S., & Hassabis, D. (2015). Human-level control through deep reinforcement learning. *Nature*, 518(7540), 529–533. https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
+
+Oh, J., Guo, X., Lee, H., Lewis, R. L., & Singh, S. (2015). Action-conditional video prediction using deep networks in Atari games. *Advances in Neural Information Processing Systems*, 28. [https://arxiv.org/abs/1507.08750](https://arxiv.org/abs/1507.08750)
+
+Pomerleau, D. A. (1989). ALVINN: An autonomous land vehicle in a neural network. *Advances in Neural Information Processing Systems*, 1, 305–313. https://proceedings.neurips.cc/paper/1988/file/812b4ba287f5ee0bc9d43bbf5bbe87fb-Paper.pdf
 
 Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., & Salakhutdinov, R. (2014). Dropout: A simple way to prevent neural networks from overfitting. *Journal of Machine Learning Research*, 15(1), 1929–1958. [https://jmlr.org/papers/v15/srivastava14a.html](https://jmlr.org/papers/v15/srivastava14a.html)
 

@@ -1,3 +1,24 @@
+# -----------------------------------------------------------------------
+# NOTE: This file was generated with `pip freeze` from a conda environment
+# (deep-learning-capstone). Most entries use the `package @ file:///...`
+# format, which is standard pip freeze output for conda-managed packages
+# and reflects local build artifact paths on the original machine.
+# This file will NOT be installable via `pip install -r requirements.txt`
+# on another system. To reproduce the environment, use:
+#
+#   conda env create -f environment.yml
+#
+# Key package versions for reference:
+#   torch==2.6.0+cu124  (CUDA 12.4 build — CPU users see README)
+#   numpy==2.4.3
+#   scikit-learn==1.7.1
+#   matplotlib==3.10.8
+#   Pillow==12.1.1
+#   seaborn==0.13.2
+#   tqdm==4.67.3
+#   jupyter / jupyterlab==4.5.3
+#   Python==3.11.15
+# -----------------------------------------------------------------------
 aiodns @ file:///C:/Users/task_177209691568561/croot/aiodns_1772096986334/work
 aiohappyeyeballs @ file:///C:/b/abs_f806x82huz/croot/aiohappyeyeballs_1755769855628/work
 aiohttp @ file:///C:/Users/task_176781285106552/croot/aiohttp_1767813778340/work

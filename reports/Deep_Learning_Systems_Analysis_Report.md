@@ -15,7 +15,7 @@ This report presents a behavioral cloning experiment (Pomerleau, 1989) that trai
 
 ## Dataset and Task Description
 
-The dataset is Atari-HEAD (Zhang et al., 2020), a collection of real human gameplay recordings from Atari 2600 games. Atari-HEAD captures synchronized eye-tracking data, gameplay frames, and action inputs from a single human player across multiple play sessions. The Montezuma's Revenge subset used in this project contains 27 sessions (20 standard and 7 highscore) totaling 447,300 frames. Each frame is paired with the action the player pressed at that moment, recorded as an Arcade Learning Environment (ALE) action code. The dataset is publicly available under CC BY 4.0 and was retrieved from Zenodo.
+The dataset is Atari-HEAD (Zhang et al., 2020), a collection of real human gameplay recordings from Atari 2600 games. Atari-HEAD captures synchronized eye-tracking data, gameplay frames, and action inputs from a single human player across 27 play sessions. The full Atari-HEAD study collected data from four research participants across 20 Atari games; this project uses only the Montezuma's Revenge recordings from one participant. The Montezuma's Revenge subset used in this project contains 27 sessions (20 standard and 7 highscore) totaling 447,300 frames. Each frame is paired with the action the player pressed at that moment, recorded as an Arcade Learning Environment (ALE) action code. The dataset is publicly available under CC BY 4.0 and was retrieved from Zenodo.
 
 Montezuma's Revenge was selected over other Atari titles for three reasons. First, it is a side scrolling platformer requiring jumping, ladder climbing, key collection, and hazard avoidance, making its action vocabulary directly relevant to platformer behavior modeling. Second, its class distribution is far more balanced than alternatives such as Breakout, where the NOOP action accounts for over 78% of frames. Third, its 447,300 frame count provides sufficient scale for deep learning training on GPU hardware.
 
@@ -44,13 +44,13 @@ At 84x84 input, the three convolutional layers reduce spatial dimensions to a 7x
 
 Three architecture families were evaluated before selecting the DQN CNN.
 
-**Recurrent Neural Network (LSTM).** An LSTM processes frames sequentially and maintains hidden state across timesteps, enabling long range temporal dependencies (Goodfellow et al., 2016, chap. 10). This was rejected for two reasons. First, the temporal context needed for this task is short: four consecutive frames are sufficient to encode ball trajectory or character motion direction. Frame stacking handles this more efficiently than a recurrent component and adds no training complexity. Second, an LSTM applied frame by frame introduces sequential dependencies that complicate batching and slow training relative to a fully parallel CNN.
+**Recurrent Neural Network (LSTM).** An LSTM processes frames sequentially and maintains hidden state across timesteps, enabling long range temporal dependencies (Goodfellow et al., 2016, chap. 10). This was rejected for two reasons. First, the temporal context needed for this task is short: four consecutive frames are sufficient to encode character motion direction. Frame stacking handles this more efficiently than a recurrent component and adds no training complexity. Second, an LSTM applied frame by frame introduces sequential dependencies that complicate batching and slow training relative to a fully parallel CNN.
 
 **Vision Transformer (ViT).** A ViT applies self attention across patches of the input frame, enabling global context across the full image. This was rejected because ViTs trained from scratch require ImageNet-scale data to match CNN performance; Dosovitskiy et al. (2021) recommend large scale pretraining for ViT on smaller downstream tasks, and 447,300 frames is insufficient to realize its advantage. In addition, global self attention across all patch pairs is a computationally expensive solution to a local pattern detection problem that CNNs handle efficiently through translation invariant filters. Using the DQN CNN also keeps results directly comparable to the Atari deep learning literature.
 
 **Pretrained CNN (ResNet).** A ResNet pretrained on ImageNet could provide strong feature extraction without training from scratch. This was rejected because ImageNet pretrained weights encode statistical properties of natural photographs (texture, color, object scale) that do not transfer to 84x84 grayscale Atari game frames, which have distinct visual statistics: flat color regions, hard edges, sprite based geometry, and no photographic texture (Goodfellow et al., 2016, chap. 15). Fine tuning a pretrained ResNet on this domain would require significant adaptation and introduces more variables than training the DQN architecture from scratch.
 
-**Selected architecture: DQN 3-conv CNN.** The DQN architecture was designed specifically for 84x84 Atari frame input and is the established benchmark in the Atari deep learning literature (Mnih et al., 2015). Its translation invariant convolutional filters (Goodfellow et al., 2016) are well suited to detecting local spatial features such as character position, ladder edges, and platform geometry. The 7x7x64 feature map produced at 84x84 input is a well validated design point, and the approximately 1.68 million parameter count is appropriately sized for 447,300 training frames: expressive enough to learn meaningful action predictors without being overparameterized for the dataset scale.
+**Selected architecture: DQN 3-conv CNN.** The DQN architecture was designed specifically for 84x84 Atari frame input and is the established benchmark in the Atari deep learning literature (Mnih et al., 2015). Its translation invariant convolutional filters (Goodfellow et al., 2016, chap. 9) are well suited to detecting local spatial features such as character position, ladder edges, and platform geometry. The 7x7x64 feature map produced at 84x84 input is a well validated design point, and the approximately 1.68 million parameter count is appropriately sized for 447,300 training frames: expressive enough to learn meaningful action predictors without being overparameterized for the dataset scale.
 
 ### Input Representation
 
@@ -76,7 +76,7 @@ Class weights are computed from training labels only using inverse frequency wei
 
 ### Regularization
 
-An initial 30 epoch training run revealed clear overfitting: training loss fell to 0.12 while validation loss diverged to 0.50 by epoch 30, and the train/validation accuracy gap exceeded 7 percentage points. Dropout (p=0.5) and L2 weight decay (1e-4) were added to address this, reducing the gap to approximately 4 percentage points and stabilizing validation loss.
+An initial 30 epoch training run revealed clear overfitting: training loss fell near 0.12 while validation loss diverged above 0.50, with a train/validation accuracy gap exceeding 7 percentage points in a preliminary run before regularization was applied. Dropout (p=0.5) and L2 weight decay (1e-4) were added to address this, reducing the gap to approximately 4 percentage points and stabilizing validation loss.
 
 ---
 
@@ -110,20 +110,20 @@ The controlled comparison tests one hypothesis: does four frame temporal context
 
 | Class | Precision | Recall | F1    |
 | ----- | --------- | ------ | ----- |
-| NOOP  | 0.92      | 0.88   | 0.897 |
-| RIGHT | 0.90      | 0.91   | 0.906 |
-| LEFT  | 0.93      | 0.91   | 0.917 |
-| UP    | 0.85      | 0.94   | 0.894 |
-| DOWN  | 0.89      | 0.93   | 0.910 |
+| NOOP  | 0.917     | 0.877  | 0.897 |
+| RIGHT | 0.901     | 0.911  | 0.906 |
+| LEFT  | 0.926     | 0.909  | 0.917 |
+| UP    | 0.853     | 0.939  | 0.894 |
+| DOWN  | 0.889     | 0.932  | 0.910 |
 
 
 ### Interpretation
 
 The four frame stacked model outperforms the single frame baseline by 4.0 percentage points on accuracy (90.6% vs 86.6%) and 3.8 percentage points on macro F1 (90.5% vs 86.7%). The near identical accuracy and macro F1 scores for both models confirm that the class distribution is balanced enough that neither metric is misleading on its own.
 
-The improvement is consistent across all five action classes. UP recall improved from 0.93 to 0.94 and DOWN recall from 0.90 to 0.93. This supports the hypothesis that temporal context helps most for motion dependent actions. LEFT showed the largest F1 improvement (+5.3pp), with RIGHT close behind (+5.1pp), confirming that horizontal direction of travel is encoded in motion rather than any single frame. LEFT achieved the highest F1 score in the stacked model at 0.92. UP at 0.89 is the only class below 0.90, reflecting the challenge of predicting less frequent vertical actions from limited temporal context.
+The improvement is consistent across all five action classes. UP recall improved from 0.93 to 0.94 and DOWN recall from 0.90 to 0.93. This supports the hypothesis that temporal context helps most for motion dependent actions. LEFT showed the largest F1 improvement (+5.3pp), with RIGHT close behind (+5.1pp), confirming that horizontal direction of travel is encoded in motion rather than any single frame. LEFT achieved the highest F1 score in the stacked model at 0.917. UP at 0.894 is the only class below 0.90, reflecting the challenge of predicting less frequent vertical actions from limited temporal context.
 
-The NOOP boosted experiment produced a substantial improvement in NOOP recall: from 0.857 to 0.916 (+5.9pp), with NOOP F1 rising +1.3pp and overall macro F1 improving by +0.8pp. However, the stacked model outperforms the NOOP-boosted baseline by 3.1pp on accuracy and 3.0pp on macro F1. Weight adjustment helps by penalizing NOOP misses more during training, but temporal context from consecutive frames is a more effective solution for distinguishing idle frames from directional movement.
+The NOOP boosted experiment produced a substantial improvement in NOOP recall: from 0.858 to 0.916 (+5.8pp), with NOOP F1 rising +1.3pp and overall macro F1 improving by +0.8pp. However, the stacked model outperforms the NOOP-boosted baseline by 3.1pp on accuracy and 3.0pp on macro F1. Weight adjustment helps by penalizing NOOP misses more during training, but temporal context from consecutive frames is a more effective solution for distinguishing idle frames from directional movement.
 
 ### Non-Technical Summary
 

@@ -59,7 +59,9 @@ outputs/model_artifacts/                            saved PyTorch model weights
    ```
 5. Run all cells from top to bottom.
 
-**Note:** GPU execution is recommended. The notebook detects CUDA automatically and falls back to CPU if unavailable. Training both models on a modern GPU takes approximately 30 to 60 minutes.
+**Prerequisites:** Anaconda or Miniconda with Python 3.11, and conda on your PATH.
+
+**Note:** GPU execution is recommended. The notebook detects CUDA automatically and falls back to CPU if unavailable. Training both models on a modern GPU takes approximately 30 to 60 minutes. The `environment.yml` installs `torch==2.6.0+cu124` (CUDA 12.4 build). CPU-only users should install PyTorch separately after activating the environment: `pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu`.
 
 ---
 

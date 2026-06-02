@@ -98,6 +98,7 @@ The controlled comparison tests one hypothesis: does four frame temporal context
 
 ### Model Comparison
 
+Macro F1 is the primary metric because the five action classes are not perfectly balanced: UP and DOWN each represent roughly 10% of frames while LEFT, NOOP, and RIGHT each represent roughly 25 to 28%. Macro F1 averages the per class F1 scores without weighting by support, so it treats a failure on UP or DOWN as equally important as a failure on LEFT or RIGHT. Accuracy alone would reward a model that ignores minority classes, making it a misleading signal for this task (He & Garcia, 2009).
 
 | Metric   | Baseline (1-frame) | NOOP-Boosted (1-frame) | Stacked (4-frame) |
 | -------- | ------------------ | ---------------------- | ----------------- |
@@ -121,9 +122,9 @@ The controlled comparison tests one hypothesis: does four frame temporal context
 
 The four frame stacked model outperforms the single frame baseline by 4.0 percentage points on accuracy (90.6% vs 86.6%) and 3.8 percentage points on macro F1 (90.5% vs 86.7%). The near identical accuracy and macro F1 scores for both models confirm that the class distribution is balanced enough that neither metric is misleading on its own.
 
-The improvement is consistent across all five action classes. UP recall improved from 0.93 to 0.94 and DOWN recall from 0.90 to 0.93. This supports the hypothesis that temporal context helps most for motion dependent actions. LEFT showed the largest F1 improvement (+5.3pp), with RIGHT close behind (+5.1pp), confirming that horizontal direction of travel is encoded in motion rather than any single frame. LEFT achieved the highest F1 score in the stacked model at 0.917. UP at 0.894 is the only class below 0.90, reflecting the challenge of predicting less frequent vertical actions from limited temporal context.
+The improvement is consistent across all five action classes. UP recall improved from 0.93 to 0.94 and DOWN recall from 0.90 to 0.93. This supports the hypothesis that temporal context helps most for motion dependent actions. LEFT showed the largest F1 improvement (+5.3pp), with RIGHT close behind (+5.1pp), confirming that horizontal direction of travel is encoded in motion rather than any single frame. LEFT achieved the highest F1 score in the stacked model at 0.92. UP at 0.89 is the only class below 0.90, reflecting the challenge of predicting less frequent vertical actions from limited temporal context.
 
-The NOOP boosted experiment produced a substantial improvement in NOOP recall: from 0.858 to 0.916 (+5.8pp), with NOOP F1 rising +1.3pp and overall macro F1 improving by +0.8pp. However, the stacked model outperforms the NOOP-boosted baseline by 3.1pp on accuracy and 3.0pp on macro F1. Weight adjustment helps by penalizing NOOP misses more during training, but temporal context from consecutive frames is a more effective solution for distinguishing idle frames from directional movement.
+The NOOP boosted experiment produced a substantial improvement in NOOP recall: from 0.858 to 0.916 (+5.8pp), with NOOP F1 rising +1.3pp and overall macro F1 improving by +0.8pp. However, the stacked model outperforms the NOOP boosted baseline by 3.1pp on accuracy and 3.0pp on macro F1. Weight adjustment helps by penalizing NOOP misses more during training, but temporal context from consecutive frames is a more effective solution for distinguishing idle frames from directional movement.
 
 ### Non-Technical Summary
 
